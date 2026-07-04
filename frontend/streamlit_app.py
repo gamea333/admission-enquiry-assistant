@@ -4,7 +4,7 @@ import uuid
 import requests
 import streamlit as st
 
-API_URL = os.getenv("API_URL", "https://admission-enquiry-assistant.onrender.com/")
+API_URL = os.getenv("API_URL", "https://admission-enquiry-assistant.onrender.com").rstrip("/")
 
 SAMPLE_QUESTIONS = [
     "Are seats available in Grade 7?",
@@ -446,7 +446,7 @@ def init_session_state() -> None:
 
 def check_api_health() -> bool:
     try:
-        response = requests.get(f"{API_URL}/health", timeout=3)
+        response = requests.get(f"{API_URL}/api/health", timeout=3)
         return response.status_code == 200
     except requests.RequestException:
         return False
@@ -457,7 +457,7 @@ def call_chat_api(query: str) -> dict:
         "query": query,
         "session_id": st.session_state.session_id,
     }
-    response = requests.post(f"{API_URL}/chat", json=payload, timeout=90)
+    response = requests.post(f"{API_URL}/api/chat", json=payload, timeout=90)
     response.raise_for_status()
     return response.json()
 

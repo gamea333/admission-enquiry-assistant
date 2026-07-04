@@ -6,8 +6,8 @@ A RAG-powered school ERP admission assistant for **Greenfield International Scho
 
 | Service | URL |
 |---------|-----|
-| **Frontend** (Streamlit) | [https://your-app.streamlit.app](https://your-app.streamlit.app) |
-| **Backend** (FastAPI) | [https://your-api.onrender.com](https://your-api.onrender.com) |
+| **Frontend** (Streamlit) | [https://admission-enquiry-assistant-lneswnujnxrbatjmosnlse.streamlit.app/](https://admission-enquiry-assistant-lneswnujnxrbatjmosnlse.streamlit.app/) |
+| **Backend** (FastAPI) | [https://admission-enquiry-assistant.onrender.com/](https://admission-enquiry-assistant.onrender.com/) |
 
 
 ## Architecture

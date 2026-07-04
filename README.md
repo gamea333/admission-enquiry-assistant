@@ -2,6 +2,14 @@
 
 A RAG-powered school ERP admission assistant for **Greenfield International School** (Nursery–Grade 10). Parents can ask about seat availability, fees, transport routes, policies, and application procedures. Answers are grounded in **live SQLite data** and **retrieved document chunks** (prospectus, admission policy, fee structure, FAQs, timings), then synthesized by **Google Gemini** with cited sources.
 
+## Live demo
+
+| Service | URL |
+|---------|-----|
+| **Frontend** (Streamlit) | [https://your-app.streamlit.app](https://your-app.streamlit.app) |
+| **Backend** (FastAPI) | [https://your-api.onrender.com](https://your-api.onrender.com) |
+
+
 ## Architecture
 
 ```mermaid
@@ -186,6 +194,16 @@ This project is designed to deploy on [Render](https://render.com) without a **P
 
 - `GOOGLE_API_KEY` — required for first-run vector ingest and chat generation
 - `LLM_MODEL` — optional (defaults to `gemini-2.5-flash`)
+
+**Streamlit Cloud (frontend):**
+
+Deploy `frontend/streamlit_app.py` on [Streamlit Community Cloud](https://share.streamlit.io) and set:
+
+```env
+API_URL=https://your-api.onrender.com
+```
+
+Update the **Live demo** links at the top of this README once both services are deployed.
 
 **Notes:**
 

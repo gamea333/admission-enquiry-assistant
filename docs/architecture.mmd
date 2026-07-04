@@ -1,0 +1,54 @@
+flowchart LR
+    User([User / Parent])
+
+    subgraph Frontend["Frontend"]
+        UI["Streamlit UI<br/>streamlit_app.py"]
+    end
+
+    subgraph API["FastAPI Backend"]
+        Chat["POST /api/chat"]
+        Health["GET /api/health"]
+        Router["Intent Router<br/>keyword-based routing"]
+        Merger["Context Merger<br/>labeled DB + document blocks"]
+        Generator["Gemini Generator<br/>gemini-2.5-flash"]
+    end
+
+    subgraph Retrieval["Retrieval Layer"]
+        Chroma[("Vector Store<br/>ChromaDB<br/>PDF / DOCX / TXT embeddings")]
+        SQLite[("SQL Database<br/>SQLite<br/>classes · fees · seats · transport · FAQ")]
+    end
+
+    subgraph External["External Services"]
+        Gemini["Gemini API<br/>embeddings + generation"]
+    end
+
+    User -->|"types question"| UI
+    UI -->|"HTTP POST /api/chat"| Chat
+    UI -->|"health check"| Health
+    Chat --> Router
+
+    Router -->|"document queries"| Chroma
+    Router -->|"structured queries"| SQLite
+
+    Chroma -->|"top-k chunks + metadata"| Merger
+    SQLite -->|"fees · seats · transport · FAQ rows"| Merger
+
+    Merger -->|"combined context prompt"| Generator
+    Generator --> Gemini
+    Gemini -->|"grounded answer"| Generator
+
+    Generator -->|"answer + cited sources"| Chat
+    Chat -->|"JSON response"| UI
+    UI -->|"render answer + Sources expander"| User
+
+    classDef user fill:#1e293b,stroke:#60a5fa,color:#f8fafc
+    classDef frontend fill:#172554,stroke:#3b82f6,color:#e2e8f0
+    classDef api fill:#1e1b4b,stroke:#818cf8,color:#e2e8f0
+    classDef store fill:#052e16,stroke:#34d399,color:#ecfdf5
+    classDef external fill:#3b0764,stroke:#c084fc,color:#f3e8ff
+
+    class User user
+    class UI frontend
+    class Chat,Health,Router,Merger,Generator api
+    class Chroma,SQLite store
+    class Gemini external

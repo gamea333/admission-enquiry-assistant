@@ -34,8 +34,8 @@ def get_settings() -> Settings:
         ),
         documents_dir=Path(os.getenv("DOCUMENTS_DIR", PROJECT_ROOT / "data" / "documents")),
         vectorstore_dir=Path(os.getenv("VECTORSTORE_DIR", PROJECT_ROOT / "data" / "vectorstore")),
-        chunk_size=int(os.getenv("CHUNK_SIZE", "1000")),
-        chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "200")),
-        embedding_model=os.getenv("EMBEDDING_MODEL", "models/text-embedding-004"),
-        llm_model=os.getenv("LLM_MODEL", "gemini-2.0-flash"),
+        chunk_size=int(os.getenv("CHUNK_SIZE", "800")),
+        chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "100")),
+        embedding_model=os.getenv("EMBEDDING_MODEL", "models/embedding-001"),
+        llm_model=os.getenv("LLM_MODEL", "gemini-2.5-flash"),
     )

@@ -1,12 +1,15 @@
-import uuid
-
 from fastapi import APIRouter, HTTPException
 
 from app.config import get_settings
-from app.rag.generator import generate_answer
-from app.schemas import ChatRequest, ChatResponse, HealthResponse, SourceDocument
+from app.rag.generator import answer_query
+from app.schemas import ChatRequest, ChatResponse, HealthResponse
 
 router = APIRouter()
+
+NO_CONTEXT_ANSWER = (
+    "I don't have that information in our records. "
+    "Please contact the admissions office at +91 80 4123 5600 or admissions@greenfield.edu.in."
+)
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -25,21 +28,21 @@ def chat(request: ChatRequest) -> ChatResponse:
         )
 
     try:
-        answer, docs = generate_answer(request.message)
+        result = answer_query(request.query)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Document index not found. Run `python -m app.rag.ingest` first.",
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise HTTPException(status_code=500, detail=f"Failed to generate answer: {exc}") from exc
 
-    sources = [
-        SourceDocument(
-            content=doc.page_content[:500],
-            source=doc.metadata.get("source"),
-            page=doc.metadata.get("page"),
-        )
-        for doc in docs
-    ]
+    answer = result.get("answer", "").strip()
+    sources = result.get("sources", [])
 
-    return ChatResponse(
-        answer=answer,
-        sources=sources,
-        session_id=request.session_id or str(uuid.uuid4()),
-    )
+    if not answer and not sources:
+        return ChatResponse(answer=NO_CONTEXT_ANSWER, sources=[])
+
+    return ChatResponse(answer=answer, sources=sources)

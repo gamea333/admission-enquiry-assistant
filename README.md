@@ -129,31 +129,24 @@ Edit `.env` and set your Google API key:
 GOOGLE_API_KEY=your_actual_key_here
 ```
 
-### 4. Generate sample documents (optional but recommended)
+### 4. Generate sample documents (optional)
 
 ```bash
 python scripts/generate_sample_docs.py
 ```
 
-This creates `prospectus.pdf`, `admission_policy.pdf`, `fee_structure.pdf`, `faq.docx`, and `school_timings.txt` in `data/documents/`.
+Creates PDF/DOCX/TXT files in `data/documents/`. **On first server startup**, documents are generated automatically if the folder is empty.
 
-### 5. Build the vector store
-
-```bash
-python -m app.rag.ingest
-```
-
-Requires `GOOGLE_API_KEY`. Embeds all documents into `data/vectorstore/` using Gemini embeddings (`models/embedding-001`).
-
-### 6. Seed structured data
+### 5. Seed / ingest (optional locally)
 
 ```bash
-python -m app.db.seed
+python -m app.db.seed      # SQLite ERP data
+python -m app.rag.ingest   # Chroma vector index (requires GOOGLE_API_KEY)
 ```
 
-Populates SQLite with classes (Nursery–Grade 10), fees, transport routes, and FAQs. Also runs automatically when the API starts.
+The API **automatically runs both on first startup** when `data/admissions.db` or `data/vectorstore/` are missing. Manual commands are only needed if you want to refresh data without restarting the server.
 
-### 7. Start the API
+### 6. Start the API
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -161,7 +154,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Verify: [http://localhost:8000/api/health](http://localhost:8000/api/health)
 
-### 8. Start the frontend
+Watch the console for: `Startup complete: DB seeded, vectorstore ready` (or `DB ready, vectorstore ready` if files already exist).
+
+### 7. Start the frontend
 
 In a second terminal (with venv activated):
 
@@ -170,6 +165,33 @@ streamlit run frontend/streamlit_app.py
 ```
 
 Open: [http://localhost:8501](http://localhost:8501)
+
+## Deployment (Render)
+
+This project is designed to deploy on [Render](https://render.com) without a **Pre-Deploy Command**. On Render's free/starter tiers, Pre-Deploy Commands are a **paid feature**, so first-run setup is handled inside the FastAPI **lifespan startup** handler instead:
+
+1. **Database** — if `data/admissions.db` does not exist, `seed_sample_data()` runs once.
+2. **Vector store** — if `data/vectorstore/` is missing or empty, sample documents are generated (when needed) and `ingest()` runs once.
+3. **Logging** — startup prints clear `INFO` lines; look for `Startup complete: DB seeded, vectorstore ready` in Render deploy logs to confirm success.
+
+**Render web service settings (example):**
+
+| Setting | Value |
+|---------|--------|
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Pre-Deploy Command | *(leave empty — not required)* |
+
+**Environment variables on Render:**
+
+- `GOOGLE_API_KEY` — required for first-run vector ingest and chat generation
+- `LLM_MODEL` — optional (defaults to `gemini-2.5-flash`)
+
+**Notes:**
+
+- SQLite and Chroma files are written to the container filesystem. On Render, use a **persistent disk** mounted at `data/` if you want them to survive redeploys without re-ingesting.
+- If `GOOGLE_API_KEY` is missing on first boot, the DB will still seed but the vector store step will log an error; chat answers that need documents will be limited until ingest succeeds.
+- Locally, existing `data/admissions.db` and `data/vectorstore/` are detected and **skipped** — no re-seed or re-ingest on every restart.
 
 ## Example queries
 
@@ -238,7 +260,7 @@ pytest tests/ -q
 | **Chroma local disk** — not shared across instances | Move to a managed vector DB (Pinecone, Weaviate, or pgvector). |
 | **No admin UI** — data changes require scripts/SQL | Build an ERP admin panel for seat updates, fee changes, and route management. |
 | **English only** | Add multilingual document ingestion and prompt templates. |
-| **Re-ingest on every deploy** — manual `python -m app.rag.ingest` | Automate ingest in CI/CD; version document sets. |
+| **Re-ingest on every deploy** — manual `python -m app.rag.ingest` | First-run ingest runs automatically at startup; use a Render persistent disk to keep the index across redeploys. |
 
 ## Regenerating the architecture diagram
 

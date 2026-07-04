@@ -4,7 +4,7 @@ import uuid
 import requests
 import streamlit as st
 
-API_URL = os.getenv("API_URL", "http://localhost:8000/api")
+API_URL = os.getenv("API_URL", "https://admission-enquiry-assistant.onrender.com/")
 
 SAMPLE_QUESTIONS = [
     "Are seats available in Grade 7?",
